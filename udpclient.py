@@ -21,12 +21,12 @@ class UDPClient:
                 # receive response
                 data, addr = client.recvfrom(4096)
                 print(f"[+] Received response from {addr}")
-                print(data.decode())
+                print(data.decode(errors="ignore"))
             except socket.timeout:
                 print("[-] No response received (timeout)")
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Simple UDP Client")
 
     parser.add_argument("-t", "--target", required=True, help="Target IP address")
@@ -38,3 +38,6 @@ if __name__ == "__main__":
 
     client = UDPClient(args.target, args.port, args.message, args.timeout)
     client.run()
+
+if __name__=="__main__":
+    main()

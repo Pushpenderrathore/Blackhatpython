@@ -9,21 +9,17 @@ class UDPClient:
         self.timeout = timeout
 
     def run(self):
-        # create UDP socket
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
-            client.settimeout(self.timeout)
-
-            # send data
-            client.sendto(self.message, (self.target, self.port))
-            print(f"[+] Sent data to {self.target}:{self.port}")
-
-            try:
-                # receive response
+        try:
+            # create UDP socket
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
+                client.settimeout(self.timeout)
+                client.sendto(self.message, (self.target, self.port))
+                print(f"[+] Sending data to {self.target}:{self.port}")
                 data, addr = client.recvfrom(4096)
                 print(f"[+] Received response from {addr}")
                 print(data.decode(errors="ignore"))
-            except socket.timeout:
-                print("[-] No response received (timeout)")
+        except socket.timeout:
+            print(f"[-] No response received within timeout period of {self.timeout} seconds")
 
 
 def main():

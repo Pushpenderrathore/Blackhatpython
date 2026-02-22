@@ -10,7 +10,6 @@ class UDPClient:
 
     def run(self):
         try:
-            # create UDP socket
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
                 client.settimeout(self.timeout)
                 client.sendto(self.message, (self.target, self.port))

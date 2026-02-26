@@ -1,0 +1,38 @@
+import os
+import socket
+import argparse
+
+class TCPClient:
+    def __init__(self,target: str, port: int , message: str, timeout: int = 5):
+        sefl.target=target
+        self.port=port
+        self.message=message.encode()
+        self.timeout=timeout
+
+    def connection(self):
+        try:
+            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as client:
+                client.settimeout(self.timeout)
+                client.connect((self.target,self.port))
+                client.sendall(self.message)
+                resp = client.recv(4096)
+                return resp.decode(errors="ignore")
+        except socket.settimeout(self.timeout):
+            return "Connection Time Out"
+        except ConnectionRefusedError:
+            return "Connection refused by host"
+        except socket.gaierror:
+            return "Wrong Host"
+        except KeyBoardInterrupt:
+            return "User Interrupted"
+        except Exception as e:
+            return "Unusual Error"
+
+    def main():
+        parser=argparse.ArgumentParser(description="TCP Client")
+        parser.add_argument("-t","--target",required=True,help="Target host")
+        parser.add_argument("-p","--port",required=True,type=int,help="Target port")
+        parser.add_argument("-m","--message",required=True,help="Send message")
+        parser.add_argument("-T","--timeout",required=True,default=5,help="Time out")
+
+        args = parser.ar

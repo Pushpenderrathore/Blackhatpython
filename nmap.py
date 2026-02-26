@@ -1,5 +1,6 @@
 import socket
 from datetime import datetime
+import argparse
 
 def scan_ports(target):
     print(f"Scanning target: {target}")

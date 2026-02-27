@@ -13,8 +13,10 @@ class TUClient:
     def connection(self):
         if self.protocol=="tcp":
             return self._run_tcp()
-        if self.protocol=="udp":
+        elif self.protocol=="udp":
             return self._run_udp()
+        else:
+            return "Unknown Command"
         
     def _run_tcp(self):
         try:
@@ -53,13 +55,14 @@ class TUClient:
         except Exception as e:
             return "[!] Unexpected Error"
         
+        
 def main():
     parser = argparse.ArgumentParser(description="TU Client")
-    parser.add_argument("-t","--target",required=True,help="Target Host")
-    parser.add_argument("-p","--port",required=True,type=int,help="Target Port")
-    parser.add_argument("-m","--message",required=True,type=str,help="Message To Send")
-    parser.add_argument("-P","--protocol",choices=["tcp" , "udp"],default="tcp",help="protocol tcp or udp")
-    parser.add_argument("-T","--timeout",type=int,default=5,help="Set Time Out")
+    parser.add_argument("-t ","--target",required=True,help="Target Host")
+    parser.add_argument("-p ","--port",required=True,type=int,help="Target Port")
+    parser.add_argument("-m ","--message",required=True,type=str,help="Message To Send")
+    parser.add_argument("-P ","--protocol",choices=["tcp" , "udp"],default="tcp",help="protocol tcp or udp")
+    parser.add_argument("-T ","--timeout",type=int,default=5,help="Set Time Out")
 
     args = parser.parse_args()
 

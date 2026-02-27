@@ -3,7 +3,6 @@ import argparse
 import threading
 from datetime import datetime
 
-
 class NmapLite:
     def __init__(self,target: str,start_port: int,end_port: int,protocol: str = "tcp",timeout: float = 0.5):
         self.target = target

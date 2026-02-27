@@ -134,7 +134,7 @@ def client_handler(client_socket):
     # Command shell
     if command:
         while True:
-            client_socket.send(b"<BHP:#> ")
+            client_socket.send(b"<enp7s0d:#> ")
 
             cmd_buffer = b""
             while b"\n" not in cmd_buffer:

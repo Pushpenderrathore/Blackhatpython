@@ -29,7 +29,6 @@ class TUClient:
                 client.sendall(self.message)
                 resp = client.recv(4096)
                 return resp.decode(errors="ignore")
-
         except socket.timeout:
             return "[!] Connection Time Out"
         except ConnectionRefusedError:
@@ -48,7 +47,6 @@ class TUClient:
                 client.sendto(self.message, (self.target, self.port))
                 data, addr = client.recvfrom(4096)
                 return f"Response from {addr} -> {data.decode(errors='ignore')}"
-
         except socket.timeout:
             return "[!] Connection Time Out"
         except ConnectionRefusedError:
@@ -73,27 +71,45 @@ class TUClient:
 
                     thread = threading.Thread(target=self.handle_client,args=(client, addr))
                     thread.start()
-
+        except socket.timeout:
+            return "[!] Connection Time Out"
+        except ConnectionRefusedError:
+            return "[!] Connection Refused"
+        except KeyboardInterrupt:
+            return "[!] User Interrupted"
+        except socket.gaierror:
+            return "[!] Unknown Host"
         except Exception as e:
             return f"[!] Server Error: {e}"
 
     def handle_client(self, client, addr):
-        with client:
-            try:
-                data = client.recv(4096)
-                print(f"[*] Received from {addr}: {data.decode(errors='ignore')}")
-                client.sendall(b"Message Received")
-            except socket.timeout:
-                return "[!] Connection Time Out"
-            except ConnectionRefusedError:
-                return "[!] Connection Refused"
-            except KeyboardInterrupt:
-                return "[!] User Interrupted"
-            except socket.gaierror:
-                return "[!] Unknown Host"            
-            except Exception as e:
-                return f"[!] Client Error: {e}"
+        print(f"[+] Connected: {addr}")
 
+        try:
+            while True:
+                data = client.recv(4096)
+    
+                if not data:
+                    break  # client disconnected
+    
+                print(f"[{addr}] {data.decode(errors='ignore')}")
+                client.sendall(b"Message Received\n")
+    
+        except socket.timeout:
+            return "[!] Connection Time Out"
+        except ConnectionRefusedError:
+            return "[!] Connection Refused"
+        except KeyboardInterrupt:
+            return "[!] User Interrupted"
+        except socket.gaierror:
+            return "[!] Unknown Host"            
+        except Exception as e:
+            return f"[!] Client Error: {e}"
+    
+        finally:
+            client.close()
+            print(f"[-] Disconnected: {addr}")
+                
 def main():
     parser = argparse.ArgumentParser(description="TSU Client Tool")
     parser.add_argument("-t", "--target", required=True, help="Target Host")

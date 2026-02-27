@@ -4,7 +4,7 @@ import argparse
 
 class TCPClient:
     def __init__(self,target: str, port: int , message: str, timeout: int = 5):
-        sefl.target=target
+        self.target=target
         self.port=port
         self.message=message.encode()
         self.timeout=timeout
@@ -23,16 +23,22 @@ class TCPClient:
             return "Connection refused by host"
         except socket.gaierror:
             return "Wrong Host"
-        except KeyBoardInterrupt:
+        except KeyboardInterrupt:
             return "User Interrupted"
         except Exception as e:
-            return "Unusual Error"
+            return f"Unusual Error: {e}"
 
-    def main():
-        parser=argparse.ArgumentParser(description="TCP Client")
-        parser.add_argument("-t","--target",required=True,help="Target host")
-        parser.add_argument("-p","--port",required=True,type=int,help="Target port")
-        parser.add_argument("-m","--message",required=True,help="Send message")
-        parser.add_argument("-T","--timeout",required=True,default=5,help="Time out")
+def main():
+    parser=argparse.ArgumentParser(description="TCP Client")
+    parser.add_argument("-t","--target",required=True,help="Target host")
+    parser.add_argument("-p","--port",required=True,type=int,help="Target port")
+    parser.add_argument("-m","--message",required=True,help="Send message")
+    parser.add_argument("-T","--timeout",required=True,default=5,help="Time out")
+    args = parser.parse_args()
+    client = TCPClient(args.target,args.port,args.message,args.timeout)
+    response = client.connection()
+    print(f"Response from {args.target}:{args.port} -> {response}")
 
-        args = parser.ar
+if __name__ == "__main__":
+    main()
+    

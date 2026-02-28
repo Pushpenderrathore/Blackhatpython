@@ -75,6 +75,18 @@ def run_command(command):
         output = b"Failed to execute command.\n"
     return output
 
+# def run_command(command):
+#     command = command.strip()
+#     try:
+#         result = subprocess.run(
+#             command,
+#             shell=True,
+#             capture_output=True
+#         )
+#         return result.stdout + result.stderr
+#     except Exception as e:
+#         return f"Error: {e}".encode()
+
 def client_handler(client_socket):
     global upload_destination
     global execute

@@ -100,15 +100,108 @@ def client_handler(client_socket):
         output = run_command(execute)
         client_socket.send(output)
     
-    # Command shell
+    # Command shell with dup2 redirection
     if command:
-        while True:
-            client_socket.send(b"<enp7s0d:#> ")
-            cmd_buffer = b""
-            while b"\n" not in cmd_buffer:
-                cmd_buffer += client_socket.recv(1024)
-            response = run_command(cmd_buffer.decode())
-            client_socket.send(response)
+        try:
+            import os
+            import pty
+            import select
+            import signal
+            import sys
+            import termios
+            import struct
+            import fcntl
+            import array
+            
+            # Send initial prompt
+            client_socket.send(b"<enp7s0d:#> \r\n")
+            
+            # Fork a new pseudo-terminal
+            pid, fd = pty.fork()
+            
+            if pid == 0:  # Child process
+                try:
+                    # Set up the shell with proper environment
+                    os.environ['TERM'] = 'xterm-256color'
+                    os.environ['SHELL'] = '/bin/bash'
+                    os.environ['PS1'] = '\\u@\\h:\\w\\$ '
+                    
+                    # Execute bash
+                    os.execve("/bin/bash", ["/bin/bash", "--login"], os.environ)
+                    
+                except Exception as e:
+                    # Write error to stderr
+                    sys.stderr.write(f"Failed to spawn shell: {e}\n")
+                    os._exit(1)
+                    
+            else:  # Parent process
+                try:
+                    # Set the terminal window size if possible
+                    def set_winsize(fd, rows, cols):
+                        winsize = struct.pack("HHHH", rows, cols, 0, 0)
+                        fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
+                    
+                    # Default terminal size
+                    set_winsize(fd, 24, 80)
+                    
+                    # Handle I/O between socket and pty
+                    while True:
+                        try:
+                            rlist, _, _ = select.select([client_socket, fd], [], [])
+                            
+                            for sock in rlist:
+                                if sock == client_socket:  # Data from client
+                                    data = client_socket.recv(1024)
+                                    if not data:
+                                        raise EOFError("Connection closed")
+                                    
+                                    # Check for window size change (if client sends special sequence)
+                                    # This is a simplified version - you might want to implement proper window size handling
+                                    os.write(fd, data)
+                                    
+                                else:  # Data from pty (child process)
+                                    try:
+                                        data = os.read(fd, 1024)
+                                        if not data:
+                                            raise EOFError("Child process closed")
+                                        client_socket.send(data)
+                                    except OSError:
+                                        raise EOFError("Child process terminated")
+                                        
+                        except (EOFError, KeyboardInterrupt):
+                            break
+                        except Exception as e:
+                            print(f"Error in I/O loop: {e}")
+                            break
+                            
+                finally:
+                    # Clean up
+                    try:
+                        os.close(fd)
+                        os.kill(pid, signal.SIGTERM)
+                        os.waitpid(pid, 0)
+                    except:
+                        pass
+                    
+        except Exception as e:
+            print(f"Error setting up pty shell: {e}")
+            # If pty fails, fall back to original method
+            try:
+                client_socket.send(b"Falling back to basic command shell...\r\n")
+                while True:
+                    client_socket.send(b"<enp7s0d:#> ")
+                    cmd_buffer = b""
+                    while b"\n" not in cmd_buffer:
+                        data = client_socket.recv(1024)
+                        if not data:
+                            return
+                        cmd_buffer += data
+                    response = run_command(cmd_buffer.decode())
+                    client_socket.send(response)
+            except:
+                pass
+    
+    client_socket.close()
 
 def main():
     global listen

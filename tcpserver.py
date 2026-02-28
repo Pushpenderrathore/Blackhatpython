@@ -9,25 +9,39 @@ class tcpserver:
         self.port=port
 
     def start(self):
-        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as server:
-            server.bind((self.host,self.port))
-            server.listen(5)
-            print(f"[*] Listening on {self.host}:{self.port}")
-            while True:
-                client, addr = server.accept()
-                print(f"[*] Connection from {addr}")
-                threading.Thread(target=self.handle_client,args=(client,addr)).start()
-
+        try:
+            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as server:
+                server.bind((self.host,self.port))
+                server.listen(5)
+                print(f"[*] Listening on {self.host}:{self.port}")
+                while True:
+                    client, addr = server.accept()
+                    print(f"[*] Connection from {addr}")
+                    threading.Thread(target=self.handle_client,args=(client,addr)).start()
+        except socket.timeout:
+            print("Connection Time Out")
+        except KeyboardInterrupt:
+            print("Server stopped by user.")
+        except ConnectionRefusedError:
+            print("Connection refused by host")
+        except socket.gaierror:
+            print("Wrong Host")
+        except Exception as e:
+            print(f"Unusual Error: {e}")
+    
     def handle_client(self,client:socket.socket,addr):
-        with client:
-            print(f"[*] Handling connection from {addr}")
-            while True:
-                data = client.recv(4096)
-                if not data:
-                    break
-                print(f"[*] Received from {addr}: {data.decode(errors='ignore')}")
-                response = f"Echo: {data.decode(errors='ignore')}"
-                client.sendall(response.encode())
+        try:
+            with client:
+                print(f"[*] Handling connection from {addr}")
+                while True:
+                    data = client.recv(4096)
+                    if not data:
+                        break
+                    print(f"[*] Received from {addr}: {data.decode(errors='ignore')}")
+                    response = f"Echo: {data.decode(errors='ignore')}"
+                    client.sendall(response.encode())
+        except KeyboardInterrupt:
+            print(f"[*] Connection with {addr} closed by user.")
 
 def main():
     parser = argparse.ArgumentParser(description="Simple TCP Server")

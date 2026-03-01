@@ -1,29 +1,8 @@
 import sys
 import socket
-import getopt
 import threading
 import subprocess
-
-# Global variables
-listen = False
-command = False
-upload_destination = ""
-execute = ""
-target = ""
-port = 0
-
-def usage():
-    print("netcat IoT Tool")
-    print("Usage: netcat.py -t target_host -p port")
-    print("-l --listen               - listen on [host]:[port]")
-    print("-e --execute=command      - execute given command")
-    print("-c --command              - initialize command shell")
-    print("-u --upload=destination   - upload file and write to destination")
-    print("\nExamples:")
-    print("netcat.py -t 192.168.1.10 -p 5555 -l -c")
-    print("netcat.py -t 192.168.1.10 -p 5555 -l -e='cat /etc/passwd'")
-    print("netcat.py -t 192.168.1.10 -p 5555 -l -u=test.txt")
-    sys.exit(0)
+import argparse
 
 def client_sender(buffer):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,18 +33,42 @@ def client_sender(buffer):
 
 def server_loop():
     global target
+
     if not target:
         target = "0.0.0.0"
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind((target, port))
-    server.listen(5)
-    print(f"[*] Listening on {target}:{port}")
-    while True:
-        client_socket, addr = server.accept()
-        print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
-        client_thread = threading.Thread(target=client_handler,args=(client_socket,))
-        client_thread.start()
+
+    try:
+        server.bind((target, port))
+        server.listen(5)
+        print(f"[*] Listening on {target}:{port}")
+
+        while True:
+            try:
+                client_socket, addr = server.accept()
+                print(f"[*] Accepted connection from {addr[0]}:{addr[1]}")
+
+                client_thread = threading.Thread(
+                    target=client_handler,
+                    args=(client_socket,)
+                )
+                client_thread.start()
+
+            except KeyboardInterrupt:
+                print("\n[!] Ctrl+C detected. Stopping server...")
+                break
+
+            except Exception as e:
+                print(f"[!] Accept error: {e}")
+
+    except Exception as e:
+        print(f"[!] Failed to start server: {e}")
+
+    finally:
+        print("[*] Closing server socket.")
+        server.close()
 
 def run_command(command):
     command = command.strip()
@@ -203,6 +206,51 @@ def client_handler(client_socket):
     
     client_socket.close()
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Netcat IoT Tool (Modern argparse version)",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+
+    parser.add_argument(
+        "-l", "--listen",
+        action="store_true",
+        help="Listen on [host]:[port]"
+    )
+
+    parser.add_argument(
+        "-e", "--execute",
+        metavar="COMMAND",
+        help="Execute given command"
+    )
+
+    parser.add_argument(
+        "-c", "--command",
+        action="store_true",
+        help="Initialize command shell"
+    )
+
+    parser.add_argument(
+        "-u", "--upload",
+        metavar="DESTINATION",
+        help="Upload file and write to destination"
+    )
+
+    parser.add_argument(
+        "-t", "--target",
+        metavar="TARGET",
+        help="Target host"
+    )
+
+    parser.add_argument(
+        "-p", "--port",
+        type=int,
+        metavar="PORT",
+        help="Target port"
+    )
+
+    return parser.parse_args()
+
 def main():
     global listen
     global port
@@ -211,42 +259,32 @@ def main():
     global upload_destination
     global target
 
-    if not len(sys.argv[1:]):
-        usage()
-    try:
-        opts, args = getopt.getopt(
-            sys.argv[1:],
-            "hle:t:p:cu:",
-            ["help", "listen", "execute=", "target=", "port=", "command", "upload="]
-        )
-    except getopt.GetoptError as err:
-        print(err)
-        usage()
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage()
-        elif o in ("-l", "--listen"):
-            listen = True
-        elif o in ("-e", "--execute"):
-            execute = a
-        elif o in ("-c", "--command"):
-            command = True
-        elif o in ("-u", "--upload"):
-            upload_destination = a
-        elif o in ("-t", "--target"):
-            target = a
-        elif o in ("-p", "--port"):
-            port = int(a)
-        else:
-            assert False, "Unhandled Option"
-    if not listen and target and port > 0:
+    args = parse_args()
+
+    listen = args.listen
+    execute = args.execute or ""
+    command = args.command
+    upload_destination = args.upload or ""
+    target = args.target or ""
+    port = args.port or 0
+
+    # ---------------- SERVER MODE ---------------- #
+    if listen:
+        if port == 0:
+            print("[!!] Port required in listen mode (-p)")
+            sys.exit(1)
+        server_loop()
+        return
+
+    # ---------------- CLIENT MODE ---------------- #
+    if target and port > 0:
         buffer = sys.stdin.read()
         client_sender(buffer)
-    if listen:
-        server_loop()
-    else:
-        print("Invalid options. Use -h for help.")
-        sys.exit(0)
+        return
+
+    # ---------------- INVALID ---------------- #
+    print("[!!] Invalid options. Use -h for help.")
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()

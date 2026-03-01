@@ -1,4 +1,4 @@
-### [2] Python Networking in a Basics
+### [2] Python Networking Basics
 
 >TCP Client
 

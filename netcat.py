@@ -207,48 +207,13 @@ def client_handler(client_socket):
     client_socket.close()
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Netcat IoT Tool (Modern argparse version)",
-        formatter_class=argparse.RawTextHelpFormatter
-    )
-
-    parser.add_argument(
-        "-l", "--listen",
-        action="store_true",
-        help="Listen on [host]:[port]"
-    )
-
-    parser.add_argument(
-        "-e", "--execute",
-        metavar="COMMAND",
-        help="Execute given command"
-    )
-
-    parser.add_argument(
-        "-c", "--command",
-        action="store_true",
-        help="Initialize command shell"
-    )
-
-    parser.add_argument(
-        "-u", "--upload",
-        metavar="DESTINATION",
-        help="Upload file and write to destination"
-    )
-
-    parser.add_argument(
-        "-t", "--target",
-        metavar="TARGET",
-        help="Target host"
-    )
-
-    parser.add_argument(
-        "-p", "--port",
-        type=int,
-        metavar="PORT",
-        help="Target port"
-    )
-
+    parser = argparse.ArgumentParser(description="Netcat IoT Tool (Modern argparse version)",formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument("-l", "--listen",action="store_true",help="Listen on [host]:[port]")
+    parser.add_argument("-e", "--execute",metavar="COMMAND",help="Execute given command")
+    parser.add_argument("-c", "--command",action="store_true",help="Initialize command shell")
+    parser.add_argument("-u", "--upload",metavar="DESTINATION",help="Upload file and write to destination")
+    parser.add_argument("-t", "--target",metavar="TARGET",help="Target host")
+    parser.add_argument("-p", "--port",type=int,metavar="PORT",help="Target port")
     return parser.parse_args()
 
 def main():
